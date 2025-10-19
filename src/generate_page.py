@@ -3,8 +3,14 @@ from copystatic import extract_title
 import os
 import shutil
 
-def generate_page(from_path, template_path, to_path): #from_path -> md file or dir, template_path -> html template, to_path -> html file or dir
-    print(f"Generating page from {from_path} to {to_path} using {template_path}")
+def generate_page(from_path, template_path, to_path, basepath="/"): #from_path -> md file or dir, template_path -> html template, to_path -> html file or dir
+    print(f"Generating page from {from_path} to {to_path} using {template_path} (basepath={basepath})")
+
+    # normalize basepath
+    if not basepath.startswith("/"):
+        basepath = "/" + basepath
+    if not basepath.endswith("/"):
+        basepath = basepath + "/"
 
     # read template once
     with open(template_path, "r") as f:
@@ -16,6 +22,10 @@ def generate_page(from_path, template_path, to_path): #from_path -> md file or d
         title = extract_title(content)
         content_html = markdown_to_html_node(content).to_html()
         rendered = template_raw.replace("{{ Title }}", title).replace("{{ Content }}", content_html)
+
+        # rewrite absolute-root asset/links to use basepath
+        rendered = rendered.replace('href="/', f'href="{basepath}')
+        rendered = rendered.replace('src="/', f'src="{basepath}')
 
         out_dir = os.path.dirname(out_path) or "."
         if not os.path.exists(out_dir):

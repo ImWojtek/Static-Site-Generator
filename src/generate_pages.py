@@ -4,11 +4,17 @@ from markdown_blocks import markdown_to_html_node
 from copystatic import extract_title
 
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath="/"):
     """
     Recursively walk dir_path_content. For every .md file generate a corresponding
     .html file under dest_dir_path preserving directory structure, using template_path.
     """
+    # normalize basepath (ensure leading + trailing slash)
+    if not basepath.startswith("/"):
+        basepath = "/" + basepath
+    if not basepath.endswith("/"):
+        basepath = basepath + "/"
+
     # read template once
     with open(template_path, "r") as f:
         template_raw = f.read()
@@ -38,6 +44,10 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
                 template_raw.replace("{{ Title }}", title)
                 .replace("{{ Content }}", content_html)
             )
+
+            # rewrite absolute-root asset/links to use basepath
+            rendered = rendered.replace('href="/', f'href="{basepath}')
+            rendered = rendered.replace('src="/', f'src="{basepath}')
 
             # write output
             with open(dest_path, "w") as wf:
